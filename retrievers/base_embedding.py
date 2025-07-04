@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional, List
 
 
 class BaseEmbedding(ABC):
@@ -7,17 +8,17 @@ class BaseEmbedding(ABC):
         self.model_name = model_name
     
     @abstractmethod
-    def embedd_query(self, query: str):
+    def embedd_query(self, query: str, dimension: Optional[int] = None):
         raise NotImplementedError
 
     @abstractmethod
-    def embedd_queries(self, queries: list[str], batch_size: int = 32):
+    def embedd_queries(self, queries: List[str], batch_size: int = 32, dimension: Optional[int] = None):
         raise NotImplementedError
     
     @abstractmethod
-    def embedd_passage(self, passage: str):
+    def embedd_passage(self, passage: str, dimension: Optional[int] = None):
         raise NotImplementedError
 
     @abstractmethod
-    def embedd_passages(self, passages: list[str], batch_size: int = 32):
+    def embedd_passages(self, passages: List[str], batch_size: int = 32, dimension: Optional[int] = None):
         raise NotImplementedError
