@@ -1,7 +1,7 @@
 from typing import List
 import requests
 
-from rerankers.base_reranker import BaseRanker, RankerError
+from rerankers.base import BaseRanker, RankerError
     
 
 class NVIDIARanker(BaseRanker):

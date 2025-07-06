@@ -1,7 +1,7 @@
-from elastic_storage.storage import ElasticsearchStore
-from logger import logger
-from retrievers.base_embedding import BaseEmbedding
-from utils import load_test_data
+from core.storage.elasticsearch.storage import ElasticsearchStore
+from core.logger import logger
+from core.encoders.base import BaseEncoder
+from core.datasets.data_loader import load_test_data
 
 from tqdm.auto import tqdm
 import numpy as np
@@ -13,22 +13,22 @@ import json
 SLEEP_TIME = 20
 
 
-def _get_hits(es_store: ElasticsearchStore, embedder: BaseEmbedding,
+def _get_hits(es_store: ElasticsearchStore, embedder: BaseEncoder,
               eval_method: str, index: str, question: str, dimension: int):
     if eval_method == "dense":
-        question_embedding = embedder.embedd_query(question, dimension)
+        question_embedding = embedder.encode_query(question, dimension)
         hits = es_store.dense_search(index=index, query_embedding=question_embedding, top_k=100)["data"]
     elif eval_method == "sparse":
         hits = es_store.sparse_search(index=index, query=question, top_k=100)["data"]
     elif eval_method == "hybrid":
-        question_embedding = embedder.embedd_query(question, dimension)
+        question_embedding = embedder.encode_query(question, dimension)
         hits = es_store.hybrid_search(index=index, query=question, query_embedding=question_embedding, top_k=100)["data"]
     else:
         raise ValueError("Invalid evaluation method")
     return hits
 
 
-def evaluate(es_store: ElasticsearchStore, embedder: BaseEmbedding, eval_method: str, 
+def evaluate(es_store: ElasticsearchStore, embedder: BaseEncoder, eval_method: str, 
              data_path: str, index: str, log_path: str, save_path: str, dimension: int):
     logger.info('Loading questions...!')
     questions, answer_ids = load_test_data(data_path)

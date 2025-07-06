@@ -1,4 +1,4 @@
-from retrievers.base_embedding import BaseEmbedding
+from core.encoders.base import BaseEncoder
 
 from typing import List, Optional
 import json
@@ -11,7 +11,7 @@ class EmbeddingError(Exception):
     pass
 
 
-class NCPEmbedding(BaseEmbedding):
+class NCPEncoder(BaseEncoder):
     def __init__(self, base_url: str, api_key: str, model_name: str = ""):
         """
         Initialize NCP Embedding client
@@ -23,18 +23,18 @@ class NCPEmbedding(BaseEmbedding):
         }
         self.base_url = f"{base_url.rstrip('/')}/embeddings"
 
-    def embedd_query(self, query: str, dimension: Optional[int] = None):
+    def encode_query(self, query: str, dimension: Optional[int] = None):
         """Generate embedding for a single query"""
         if not query or not isinstance(query, str):
             raise ValueError("Query must be a non-empty string")
             
         try:
-            query_embedding = self._embedd([query], "query")
+            query_embedding = self._encode([query], "query")
             return query_embedding[0]['embedding']
         except Exception as e:
             raise EmbeddingError(f"Failed to embed query: {str(e)}")
 
-    def embedd_queries(self, queries: List[str], batch_size: int = 32):
+    def encode_queries(self, queries: List[str], batch_size: int = 32):
         """Generate embeddings for multiple queries"""
         if not queries:
             return []
@@ -42,7 +42,7 @@ class NCPEmbedding(BaseEmbedding):
             batch_inputs = [queries[i:i+batch_size] for i in range(0, len(queries), batch_size)]
             embeddings = []
             for batch in tqdm(batch_inputs, desc="Embedding queries"):
-                batch_embeddings = self._embedd(batch, "query")
+                batch_embeddings = self._encode(batch, "query")
                 embeddings.extend([emb['embedding'] for emb in batch_embeddings])
                 
             return embeddings
@@ -50,18 +50,18 @@ class NCPEmbedding(BaseEmbedding):
         except Exception as e:
             raise EmbeddingError(f"Failed to embed queries: {str(e)}")
 
-    def embedd_passage(self, passage: str, dimensions: Optional[int] = None):
+    def encode_passage(self, passage: str, dimensions: Optional[int] = None):
         """Generate embedding for a single passage"""
         if not passage or not isinstance(passage, str):
             raise ValueError("Passage must be a non-empty string")
             
         try:
-            passage_embedding = self._embedd([passage], "passage")
+            passage_embedding = self._encode([passage], "passage")
             return passage_embedding[0]['embedding']
         except Exception as e:
             raise EmbeddingError(f"Failed to embed passage: {str(e)}")
 
-    def embedd_passages(self, passages: List[str], batch_size: int = 32):
+    def encode_passages(self, passages: List[str], batch_size: int = 32):
         """Generate embeddings for multiple passages"""
         if not passages:
             return []    
@@ -71,7 +71,7 @@ class NCPEmbedding(BaseEmbedding):
             embeddings = []
             
             for batch in tqdm(batch_inputs, desc="Embedding passages"):
-                batch_embeddings = self._embedd(batch, "passage")
+                batch_embeddings = self._encode(batch, "passage")
                 embeddings.extend([emb['embedding'] for emb in batch_embeddings])
                 
             return embeddings
@@ -79,7 +79,7 @@ class NCPEmbedding(BaseEmbedding):
         except Exception as e:
             raise EmbeddingError(f"Failed to embed passages: {str(e)}")
     
-    def _embedd(self, texts: List[str], input_type: str):
+    def _encode(self, texts: List[str], input_type: str):
         """Internal method to call the embedding API"""
         texts = [f"{input_type}: {text}" for text in texts]
         payload = json.dumps({

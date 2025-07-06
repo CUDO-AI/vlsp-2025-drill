@@ -9,4 +9,4 @@ __pycache__/
 .coverage
 .coverage.*
 .coverage.xml
-original-dataset/
+ir-datasets/

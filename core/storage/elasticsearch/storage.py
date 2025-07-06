@@ -1,9 +1,9 @@
 from elasticsearch import Elasticsearch, helpers
-from logger import logger
+from core.logger import logger
 from tqdm.auto import tqdm
 
-from elastic_storage.utils import bm25_preprocessing
-from elastic_storage.fusion import weight_sum_score
+from core.storage.elasticsearch.utils import bm25_preprocessing
+from core.storage.elasticsearch.fusion import weight_sum_score
 
 
 class ElasticsearchStore:
@@ -142,7 +142,7 @@ class ElasticsearchStore:
 
         return bulk_data
 
-    def hybrid_search(self, index: str, query: str, query_embedding: list, top_k: int = 100):
+    def hybrid_search(self, index: str, query: str, query_embedding: list, top_k: int = 100, es_knn_top_k: int = 100):
         if self.client.indices.exists(index=index):
             bm25_query = bm25_preprocessing(query)
             # Define sparse_search query
@@ -157,7 +157,7 @@ class ElasticsearchStore:
             es_knn = {
                 "field": "embedding", 
                 "query_vector": query_embedding,
-                "k": 100, 
+                "k": es_knn_top_k, 
                 "num_candidates": 256
             }
             # Do sparse searching

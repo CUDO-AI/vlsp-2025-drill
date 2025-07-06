@@ -5,11 +5,11 @@ import time
 import os
 import argparse
 
-from rerankers.nvidia_reranker import NVIDIARanker
-from rerankers.tei_reranker import TEIRanker
-from utils import load_corpus, load_config, load_json
-from logger import logger
-from eval_metrics import compute_metrics
+from rerankers.nvidia import NVIDIARanker
+from rerankers.tei import TEIRanker
+from core.datasets.data_loader import load_corpus, load_config, load_json
+from core.logger import logger
+from core.evaluation.eval_metrics import compute_metrics
 
 
 load_dotenv()

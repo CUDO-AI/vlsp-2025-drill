@@ -1,7 +1,7 @@
-from elastic_storage.storage import ElasticsearchStore
-from retrievers.ncp_embedding import NCPEmbedding
-from evaluator.retrieval.retrieve_eval import evaluate as retrieve_eval
-from index.indexing import indexing
+from core.storage.elasticsearch.storage import ElasticsearchStore
+from core.encoders.ncp import NCPEncoder
+from core.evaluation.retrieval.evaluate import evaluate as retrieve_eval
+from indexing import indexing
 
 import argparse
 from dotenv import load_dotenv
@@ -11,11 +11,12 @@ import yaml
 
 load_dotenv()
 
+
 ES_STORE = ElasticsearchStore(elastic_url=os.getenv("ELASTIC_URL"), 
                               username=os.getenv("ES_USERNAME"), 
                               password=os.getenv("ES_PASSWORD"))
 
-NCP_EMBEDDER = NCPEmbedding(base_url=os.getenv("NCP_EMBEDDING_BASE_URL"),
+NCP_EMBEDDER = NCPEncoder(base_url=os.getenv("NCP_EMBEDDING_BASE_URL"),
                             api_key=os.getenv("NCP_EMBEDDING_API_KEY"),
                             model_name=os.getenv("NCP_EMBEDDING_MODEL_NAME"))
 
