@@ -1,5 +1,5 @@
 pyvi==0.1.1
-elasticsearch==9.0.0
+elasticsearch==8.15.0
 requests==2.32.4
 python-dotenv==1.1.1
 tqdm==4.67.1

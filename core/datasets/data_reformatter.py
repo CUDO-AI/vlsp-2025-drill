@@ -6,7 +6,7 @@ into a consistent format for retrieval tasks.
 """
 
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from pathlib import Path
 
 from core.logger import logger
@@ -28,7 +28,7 @@ class DataReformatter:
         self.corpus_path = Path(corpus_path)
         self.queries_path = Path(queries_path)
         
-    def load_corpus(self) -> List[Dict[str, Any]]:
+    def load_corpus(self) -> Tuple[List[Dict[str, Any]], List[str]]:
         """
         Load and reformat the legal corpus.
         
@@ -46,33 +46,25 @@ class DataReformatter:
             raw_corpus = json.load(f)
         
         reformatted_corpus = []
-        
+        error_chunks = []
         for chunk in raw_corpus:
-            # Extract chunk ID
-            chunk_id = str(chunk.get('id', ''))
-            
-            # Extract title (law_id)
             title = chunk.get('law_id', '')
-            
-            # Extract and concatenate content from all articles
-            content_parts = []
-            for article in chunk.get('content', []):
+            for idx, article in enumerate(chunk.get('content', [])):
                 article_content = article.get('content_Article', '').strip()
+                article_id = article.get('aid', f"{title}-{idx}")
                 if article_content:
-                    content_parts.append(article_content)
-            
-            content = '\n\n'.join(content_parts)
-            
-            reformatted_doc = {
-                "id": chunk_id,
-                "title": str(title),
-                "content": content
-            }
-            
-            reformatted_corpus.append(reformatted_doc)
+                    reformatted_doc = {
+                        "id": article_id,
+                        "title": str(title),
+                        "content": article_content
+                    }
+                    reformatted_corpus.append(reformatted_doc)
+                else:
+                    logger.warning(f"Article {title}-{article_id} has no content")
+                    error_chunks.append(article_id)
         
         logger.info(f"Reformatted {len(reformatted_corpus)} chunks")
-        return reformatted_corpus
+        return reformatted_corpus, error_chunks
     
     def load_queries(self) -> List[Dict[str, Any]]:
         """
@@ -96,10 +88,8 @@ class DataReformatter:
         for query in raw_queries:
             # Extract query ID
             query_id = str(query.get('qid', ''))
-            
             # Extract question text
             question = query.get('question', '').strip()
-            
             # Extract relevant document IDs
             relevant_ids = [str(rid) for rid in query.get('relevant_laws', [])]
             
@@ -114,62 +104,7 @@ class DataReformatter:
         logger.info(f"Reformatted {len(reformatted_queries)} queries")
         return reformatted_queries
     
-    def create_article_mapping(self) -> Dict[str, str]:
-        """
-        Create a mapping from article IDs to chunk IDs.
-        
-        Returns:
-            Dict mapping article ID to chunk ID
-        """
-        logger.info("Creating article to document mapping")
-        
-        with open(self.corpus_path, 'r', encoding='utf-8') as f:
-            raw_corpus = json.load(f)
-        
-        article_mapping = {}
-        
-        for chunk in raw_corpus:
-            chunk_id = str(chunk.get('id', ''))
-            for article in chunk.get('content', []):
-                article_id = str(article.get('aid', ''))
-                article_mapping[article_id] = chunk_id
-        
-        logger.info(f"Created mapping for {len(article_mapping)} articles")
-        return article_mapping
-    
-    def reformat_queries_with_mapping(self) -> List[Dict[str, Any]]:
-        """
-        Load queries and map article IDs to chunk IDs.
-        
-        Returns:
-            List of reformatted queries with chunk-level relevants
-        """
-        queries = self.load_queries()
-        article_mapping = self.create_article_mapping()
-        
-        reformatted_queries = []
-        
-        for query in queries:
-            relevant_chunks = set()
-            for article_id in query['relevants']:
-                if article_id in article_mapping:
-                    relevant_chunks.add(article_mapping[article_id])
-            
-            reformatted_query = {
-                "id": query['id'],
-                "question": query['question'],
-                "relevants": list(relevant_chunks)
-            }
-            
-            reformatted_queries.append(reformatted_query)
-        
-        logger.info(f"Reformatted {len(reformatted_queries)} queries with chunk mapping")
-        return reformatted_queries
-    
-    def save_reformatted_data(self, 
-                             corpus_output_path: str,
-                             queries_output_path: str,
-                             use_chunk_mapping: bool = True) -> None:
+    def save_reformatted_data(self, corpus_output_path: str, queries_output_path: str):
         """
         Save reformatted data to JSON files.
         
@@ -179,15 +114,16 @@ class DataReformatter:
             use_chunk_mapping: Whether to map article IDs to chunk IDs
         """
         # Save corpus
-        corpus = self.load_corpus()
+        corpus, error_chunks = self.load_corpus()
         with open(corpus_output_path, 'w', encoding='utf-8') as f:
             json.dump(corpus, f, ensure_ascii=False, indent=2)
-        
-        # Save queries
-        if use_chunk_mapping:
-            queries = self.reformat_queries_with_mapping()
-        else:
-            queries = self.load_queries()
+
+        queries = self.load_queries()
+        for query in queries:
+            for relevant in query['relevants']:
+                if relevant in error_chunks:
+                    logger.warning(f"Query {query['id']} has relevant {relevant} which is not in corpus")
+                    query['relevants'].remove(relevant)
         
         with open(queries_output_path, 'w', encoding='utf-8') as f:
             json.dump(queries, f, ensure_ascii=False, indent=2)
@@ -195,3 +131,5 @@ class DataReformatter:
         logger.info(f"Saved reformatted data:")
         logger.info(f"  Corpus: {corpus_output_path} ({len(corpus)} chunks)")
         logger.info(f"  Queries: {queries_output_path} ({len(queries)} queries)")
+        
+        return corpus, queries

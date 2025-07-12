@@ -18,7 +18,7 @@ def load_test_data(test_path):
     answers = []
     for qa in data:
         questions.append(qa['question'])
-        answers.append(qa['relevant_laws'])
+        answers.append(qa['relevants'])
 
     return questions, answers
 
@@ -30,9 +30,15 @@ def load_corpus(corpus_path):
         if isinstance(psg, str):
             corpus.append(psg)
         else:
-            law_id = psg['law_id']
-            for article in psg['content']:
-                text = law_id + '\n' + article['content_Article']
-                corpus.append(text)
+            corpus.append((psg['title'] + '\n' + psg['content']).strip())
 
+    return corpus
+
+
+def load_rank_corpus(corpus_path: str) -> dict:
+    corpus = {}
+    data = load_json(corpus_path)
+    for psg in data:
+        psg_id = str(psg["id"])
+        corpus[psg_id] = psg
     return corpus

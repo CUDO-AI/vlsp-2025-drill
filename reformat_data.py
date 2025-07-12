@@ -9,15 +9,10 @@ def main():
     )
     
     # Save reformatted data
-    reformatter.save_reformatted_data(
+    corpus, queries = reformatter.save_reformatted_data(
         corpus_output_path="ir-datasets/reformatted/corpus.json",
         queries_output_path="ir-datasets/reformatted/queries.json",
-        use_chunk_mapping=True
     )
-    
-    # Example: Load and inspect data
-    corpus = reformatter.load_corpus()
-    queries = reformatter.reformat_queries_with_mapping()
     
     print(f"\nCorpus example (first chunk):")
     print(f"ID: {corpus[0]['id']}")
@@ -31,4 +26,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

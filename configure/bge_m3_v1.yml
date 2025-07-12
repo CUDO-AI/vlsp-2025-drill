@@ -1,0 +1,15 @@
+index: "bge_m3_v1"
+corpus_path: "ir-datasets/reformatted/corpus.json"
+data_path: "ir-datasets/reformatted/queries.json"
+embedding_path: "embeddings/bge_m3_v1.npy"
+dimension: 1024
+overwrite_index: False
+# eval_method: "hybrid"
+# log_path: "evaluation-result/bge_m3_v1_hybrid.csv"
+# save_path: "evaluation-result/bge_m3_v1_hybrid.json"
+eval_method: "dense"
+log_path: "evaluation-result/bge_m3_v1_dense.csv"
+save_path: "evaluation-result/bge_m3_v1_dense.json"
+model_name: "BAAI/bge-m3"
+prefix_query: ""
+prefix_passage: ""

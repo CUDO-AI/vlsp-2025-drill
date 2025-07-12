@@ -1,7 +1,9 @@
 from typing import List, Dict, Any
+import csv
+import os
 
 
-def calculate_precision_at_k(predictions: List[List[int]], ground_truth: List[List[int]], k: int) -> float:
+def calculate_precision_at_k(predictions: List[List[str]], ground_truth: List[List[str]], k: int) -> float:
     """
     Tính precision@k cho bài toán retrieval.
     
@@ -34,7 +36,7 @@ def calculate_precision_at_k(predictions: List[List[int]], ground_truth: List[Li
     return total_precision / len(predictions)
 
 
-def calculate_recall_at_k(predictions: List[List[int]], ground_truth: List[List[int]], k: int) -> float:
+def calculate_recall_at_k(predictions: List[List[str]], ground_truth: List[List[str]], k: int) -> float:
     """
     Tính recall@k cho bài toán retrieval.
     
@@ -68,7 +70,10 @@ def calculate_recall_at_k(predictions: List[List[int]], ground_truth: List[List[
     return total_recall / len(predictions)
 
 
-def calculate_metrics_at_k(predictions: List[List[int]], ground_truth: List[List[int]], k_values: List[int] = None) -> Dict[str, Any]:
+def calculate_metrics_at_k(predictions: List[List[str]], 
+                           ground_truth: List[List[str]], 
+                           k_values: List[int] = [1, 3, 5, 10], 
+                           save_path: str = "") -> Dict[str, Any]:
     """
     Tính các metrics retrieval cho nhiều giá trị k khác nhau.
     
@@ -76,19 +81,18 @@ def calculate_metrics_at_k(predictions: List[List[int]], ground_truth: List[List
         predictions: List các list chứa doc_ids được retrieve cho mỗi query
         ground_truth: List các list chứa doc_ids đúng cho mỗi query
         k_values: List các giá trị k để tính metrics (mặc định [1, 3, 5, 10])
+        save_path: Đường dẫn file CSV để lưu kết quả (mặc định: '', không lưu)
     
     Returns:
         Dict chứa các metrics: precision@k, recall@k, f1@k, f2@k
     """
-    if k_values is None:
-        k_values = [1, 3, 5, 10]
-    
     results = {}
+    rows = []
     
     for k in k_values:
         precision_k = calculate_precision_at_k(predictions, ground_truth, k)
         recall_k = calculate_recall_at_k(predictions, ground_truth, k)
-        mrr_k = calculate_mrr(predictions, ground_truth)
+        mrr_k = calculate_mrr_at_k(predictions, ground_truth, k)
         # Tính F1@k
         f1_k = 0.0
         f2_k = 0.0
@@ -101,11 +105,20 @@ def calculate_metrics_at_k(predictions: List[List[int]], ground_truth: List[List
         results[f'f1@{k}'] = f1_k
         results[f'f2@{k}'] = f2_k
         results[f'mrr@{k}'] = mrr_k
+        
+        rows.append([f"Top_{k}", precision_k, recall_k, f1_k, f2_k, mrr_k])
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if save_path:
+        with open(save_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Top_k', 'Precision@K', 'Recall@K', 'F1@K', 'F2@K', 'MRR@K'])
+            for row in rows:
+                writer.writerow(row)
     
     return results
 
 
-def calculate_mrr(predictions: List[List[int]], ground_truth: List[List[int]]) -> float:
+def calculate_mrr_at_k(predictions: List[List[str]], ground_truth: List[List[str]], k: int) -> float:
     """
     Tính Mean Reciprocal Rank (MRR).
     
@@ -125,7 +138,7 @@ def calculate_mrr(predictions: List[List[int]], ground_truth: List[List[int]]) -
             continue
             
         # Tìm vị trí đầu tiên của relevant document
-        for rank, doc_id in enumerate(pred, 1):
+        for rank, doc_id in enumerate(pred[:k], 1):
             if doc_id in gt:
                 total_reciprocal_rank += 1.0 / rank
                 break

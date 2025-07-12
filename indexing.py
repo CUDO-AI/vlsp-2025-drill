@@ -12,11 +12,12 @@ def convert_corpus(corpus_path: str, embedding_path: str):
     formatted_chunks = []
     for doc, embedding in zip(corpus, corpus_embeddings):
         if isinstance(doc, str):
-            title, content = "", doc
+            raise ValueError("Corpus is a string")
         else:
             title, content = doc["title"], doc["content"]
         formatted_chunks.append(
             {
+                "id": str(doc["id"]),
                 "content": {
                     "title": title,
                     "content": content

@@ -1,0 +1,44 @@
+services:
+  elasticsearch:
+    container_name: es01
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - http.cors.enabled=true
+      - http.cors.allow-origin=/.*/
+      - "discovery.type=single-node"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=true
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    networks:
+      - elastic
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - /home/kienpm3/elastic-data/data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 4000M
+        reservations:
+          memory: 4000M
+  kibana:
+    container_name: kib01
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - SERVER_BASEPATH=/kibana
+      - SERVER_REWRITEBASEPATH=true
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+    ports:
+      - 5601:5601
+      
+networks:
+  elastic:
+    name: elk_stack_elastic
+    external: true

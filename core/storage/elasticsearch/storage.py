@@ -10,15 +10,16 @@ class ElasticsearchStore:
     def __init__(self, elastic_url: str, username: str, password: str):
         self.elastic_url = elastic_url
         self.client = Elasticsearch(
-            self.elastic_url, 
+            self.elastic_url,
             basic_auth=(username, password),
-            ssl_show_warn=False, 
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            ssl_show_warn=False,
             verify_certs=False,
-            timeout=30,  # Increase timeout to 30 seconds
-            max_retries=3,  # Add retry mechanism
-            retry_on_timeout=True
+            max_retries=3,
+            retry_on_timeout=True,
         )
-        logger.info(f'Client: {self.client.info()}')
+
+        logger.info(f'Client info: {self.client.info()}')
 
     def create_index(self, index: str, bm25_k1: float = 0.5, bm25_b: float = 0.5, 
                      dim: int = 768, m_hnsw: int = 32, ef_construction: int = 128, 
@@ -88,7 +89,7 @@ class ElasticsearchStore:
     def is_index_exist(self, index: str):
         return self.client.indices.exists(index=index)
     
-    def indexing(self, index: str, chunks: list[dict], batch_size: int = 512):
+    def indexing(self, index: str, chunks: list[dict], batch_size: int = 128):
         """Adding chunks of a document to elasticsearch index
         Args:
             index (str): index want to add
@@ -105,8 +106,6 @@ class ElasticsearchStore:
                 end_idx = start_idx + batch_size
                 sub_chunks = chunks[start_idx:end_idx]
                 bulk_data = self._prepare_bulk_data(chunks=sub_chunks)
-                for data, idx in zip(bulk_data, range(start_idx, end_idx)):
-                    data["_id"] = idx
                 helpers.bulk(self.client, bulk_data, index=index)
                 pbar.update(batch_size)
         message = "#> Save successfully."
@@ -126,13 +125,19 @@ class ElasticsearchStore:
         bulk_data = []
         for idx, chunk in enumerate(chunks):
             embedding = chunk.get("embedding", [])
-            content = chunk.get("content", {})
+            _content = chunk.get("content", {})
+            _id = str(chunk.get("id", ""))
+            if _id == "":
+                logger.warning(f"Chunk {idx} has no id")
+                logger.info(_content)
+                continue
             data = {
-                "content": content
+                "_id": _id,
+                "content": _content
             }
             if embedding:
-                title, context = content.get("title", ""), content.get("context", "")
-                bm25_content = bm25_preprocessing(title + " " + context)
+                title, content = _content.get("title", ""), _content.get("content", "")
+                bm25_content = bm25_preprocessing(title + " " + content)
 
                 data.update({
                     "embedding": embedding,
