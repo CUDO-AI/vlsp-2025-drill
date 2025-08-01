@@ -12,3 +12,4 @@ __pycache__/
 ir-datasets/
 evaluation-result/
 embeddings/
+models/

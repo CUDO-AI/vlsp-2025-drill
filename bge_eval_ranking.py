@@ -25,7 +25,7 @@ def evaluate(args):
     for sample in tqdm(eval_data):
         question = sample['question']
         passages = [corpus[doc_id] for doc_id in list(sample['retrieval_hits'].keys())]
-        rankings = RANKER.rerank(question, passages, config['batch_size'], config['max_length'])
+        rankings = RANKER.rerank(question, passages, 32, config['max_length'])
         sample['rerank_hits'] = {str(psg["id"]): psg["score"] for psg in rankings}
     logger.info(f"Avg time inference: {(time.time() - start_time) / len(eval_data)} seconds")
 

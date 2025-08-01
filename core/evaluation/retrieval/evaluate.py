@@ -13,8 +13,8 @@ import json
 SLEEP_TIME = 20
 
 
-def _get_hits(es_store: ElasticsearchStore, embedder: BaseEncoder,
-              eval_method: str, index: str, question: str, dimension: int):
+def search(es_store: ElasticsearchStore, embedder: BaseEncoder, 
+           eval_method: str, index: str, question: str, dimension: int):
     if eval_method == "dense":
         question_embedding = embedder.encode_query(question, dimension)
         hits = es_store.dense_search(index=index, query_embedding=question_embedding, top_k=100)["data"]
@@ -40,7 +40,7 @@ def evaluate(es_store: ElasticsearchStore, embedder: BaseEncoder, eval_method: s
     result = []
     predictions = []
     for relevant, question in tqdm(zip(answer_ids, questions), total=len(questions)):
-        hits = _get_hits(es_store, embedder, eval_method, index, question, dimension)
+        hits = search(es_store, embedder, eval_method, index, question, dimension)
         result.append({"question": question, "retrieval_hits": hits, "relevants": relevant})
         hit_indices = [str(hit) for hit in hits]
         predictions.append(hit_indices)

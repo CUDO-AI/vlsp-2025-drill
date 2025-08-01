@@ -65,4 +65,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_path', default="configure/me5_v1.yml", type=str)
     input_args = parser.parse_args()
+    logger.info(input_args)
     evaluate(input_args)

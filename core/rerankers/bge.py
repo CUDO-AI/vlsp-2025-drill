@@ -1,7 +1,7 @@
 import sys
 import os
 from contextlib import contextmanager
-import logging
+
 
 @contextmanager
 def suppress_tqdm():
@@ -53,6 +53,12 @@ class BGEReranker(BaseRanker):
     
     @staticmethod
     def preprocess_ranking_input(question: str, passages: list) -> list:
+        def clean_text(text: str) -> str:
+            text = text.replace("\n", " ")
+            text = text.replace("\t", " ")
+            text = text.replace("\r", " ")
+            return " ".join(text.split())
+        
         def is_not_punctuation(char):
             return char not in string.punctuation
 
@@ -60,6 +66,7 @@ class BGEReranker(BaseRanker):
             content_str = ""
             if isinstance(passage, dict):
                 title = passage.get("title", "")
+                # content = clean_text(passage.get("content", ""))
                 content = passage.get("content", "")
                 if title and is_not_punctuation(title[-1]):
                     content_str = f"{title}. {content}"

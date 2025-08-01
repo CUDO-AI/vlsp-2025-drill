@@ -1,8 +1,7 @@
 model_name: "BAAI/bge-reranker-v2-m3"
-eval_path: "evaluation-result/me5_v1_hybrid.json"
-corpus_path: "ir-datasets/reformatted/corpus.json"
-log_path: "evaluation-result/bge_m3_ranker_v2_metrics.csv"
-save_path: "evaluation-result/bge_m3_ranker_v2_metrics.json"
-top_k_eval: 20
+eval_path: "evaluation-result/me5_v2_hybrid.json"
+corpus_path: "ir-datasets/v2/corpus.json"
+log_path: "evaluation-result/bge_m3_ranker_v2_metrics_v5.csv"
+save_path: "evaluation-result/bge_m3_ranker_v2_metrics_v5.json"
 max_length: 512
-batch_size: 128
+batch_size: 64
