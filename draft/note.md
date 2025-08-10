@@ -1,0 +1,1 @@
+- Chunk cuối cùng đang bị dinh với phần chữ kí
